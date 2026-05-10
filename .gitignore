@@ -3,6 +3,10 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+# Project-generated data and local agent metadata
+data/
+.serena/
+
 # C extensions
 *.so
 
@@ -147,15 +151,9 @@ activemq-data/
 # SageMath parsed files
 *.sage.py
 
-# Environments
-.env
-.envrc
+# Virtual environments
 .venv
-env/
 venv/
-ENV/
-env.bak/
-venv.bak/
 
 # Spyder project settings
 .spyderproject
