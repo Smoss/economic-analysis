@@ -1,0 +1,86 @@
+from __future__ import annotations
+
+from collections.abc import Callable
+from dataclasses import dataclass
+from pathlib import Path
+
+from economic_analysis.config import Settings
+from economic_analysis.io import write_dataset
+from economic_analysis.sources import bea, bls, scf
+
+
+@dataclass(frozen=True)
+class FetchResult:
+    dataset: str
+    rows: int
+    outputs: dict[str, str]
+
+
+FetchFn = Callable[[Settings, bool], FetchResult]
+
+
+def dry_run_outputs(settings: Settings, dataset: str) -> dict[str, str]:
+    base = settings.data_dir / "processed" / dataset
+    return {
+        "csv": str(base / f"{dataset}.csv"),
+        "parquet": str(base / f"{dataset}.parquet"),
+        "metadata": str(base / "metadata.json"),
+    }
+
+
+def dry_run_result(settings: Settings, dataset: str) -> FetchResult:
+    return FetchResult(dataset=dataset, rows=0, outputs=dry_run_outputs(settings, dataset))
+
+
+def fetch_bls_labor(settings: Settings, dry_run: bool = False) -> FetchResult:
+    dataset = "bls_labor"
+    if dry_run:
+        return dry_run_result(settings, dataset)
+    frame, metadata = bls.fetch_labor(settings)
+    outputs = write_dataset(settings.data_dir, dataset, frame, metadata)
+    return FetchResult(dataset=dataset, rows=len(frame), outputs=outputs)
+
+
+def fetch_bea_pce(settings: Settings, dry_run: bool = False) -> FetchResult:
+    dataset = "bea_pce"
+    if dry_run:
+        return dry_run_result(settings, dataset)
+    frame, metadata = bea.fetch_pce(settings)
+    outputs = write_dataset(settings.data_dir, dataset, frame, metadata)
+    return FetchResult(dataset=dataset, rows=len(frame), outputs=outputs)
+
+
+def fetch_bea_gdp_industry(settings: Settings, dry_run: bool = False) -> FetchResult:
+    dataset = "bea_gdp_industry"
+    if dry_run:
+        return dry_run_result(settings, dataset)
+    frame, metadata = bea.fetch_gdp_industry(settings)
+    outputs = write_dataset(settings.data_dir, dataset, frame, metadata)
+    return FetchResult(dataset=dataset, rows=len(frame), outputs=outputs)
+
+
+def fetch_scf_home_assets(settings: Settings, dry_run: bool = False) -> FetchResult:
+    dataset = "scf_home_assets"
+    if dry_run:
+        return dry_run_result(settings, dataset)
+    frame, metadata = scf.fetch_home_assets(settings)
+    outputs = write_dataset(settings.data_dir, dataset, frame, metadata)
+    return FetchResult(dataset=dataset, rows=len(frame), outputs=outputs)
+
+
+FETCHERS: dict[str, FetchFn] = {
+    "bls-labor": fetch_bls_labor,
+    "bea-pce": fetch_bea_pce,
+    "bea-gdp-industry": fetch_bea_gdp_industry,
+    "scf-home-assets": fetch_scf_home_assets,
+}
+
+
+def fetch_all(settings: Settings, dry_run: bool = False) -> list[FetchResult]:
+    if not dry_run and not settings.bea_api_key:
+        raise RuntimeError("BEA_API_KEY is required for `fetch all`. Fetch non-BEA datasets individually if needed.")
+    return [fetcher(settings, dry_run) for fetcher in FETCHERS.values()]
+
+
+def normalize_data_dir(path: str | Path | None) -> Path | None:
+    return Path(path).expanduser() if path else None
