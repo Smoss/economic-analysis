@@ -6,7 +6,7 @@ from pathlib import Path
 
 from economic_analysis.config import Settings
 from economic_analysis.io import write_dataset
-from economic_analysis.sources import bea, bls, scf
+from economic_analysis.sources import bea, bls, cex, noaa_ndfd, noaa_observations, nws_accuracy, scf
 
 
 @dataclass(frozen=True)
@@ -41,11 +41,29 @@ def fetch_bls_labor(settings: Settings, dry_run: bool = False) -> FetchResult:
     return FetchResult(dataset=dataset, rows=len(frame), outputs=outputs)
 
 
+def fetch_bls_cex_consumption(settings: Settings, dry_run: bool = False) -> FetchResult:
+    dataset = "bls_cex_consumption"
+    if dry_run:
+        return dry_run_result(settings, dataset)
+    frame, metadata = cex.fetch_consumption(settings)
+    outputs = write_dataset(settings.data_dir, dataset, frame, metadata)
+    return FetchResult(dataset=dataset, rows=len(frame), outputs=outputs)
+
+
 def fetch_bea_pce(settings: Settings, dry_run: bool = False) -> FetchResult:
     dataset = "bea_pce"
     if dry_run:
         return dry_run_result(settings, dataset)
     frame, metadata = bea.fetch_pce(settings)
+    outputs = write_dataset(settings.data_dir, dataset, frame, metadata)
+    return FetchResult(dataset=dataset, rows=len(frame), outputs=outputs)
+
+
+def fetch_bea_gdp_components(settings: Settings, dry_run: bool = False) -> FetchResult:
+    dataset = "bea_gdp_components"
+    if dry_run:
+        return dry_run_result(settings, dataset)
+    frame, metadata = bea.fetch_gdp_components(settings)
     outputs = write_dataset(settings.data_dir, dataset, frame, metadata)
     return FetchResult(dataset=dataset, rows=len(frame), outputs=outputs)
 
@@ -68,11 +86,44 @@ def fetch_scf_home_assets(settings: Settings, dry_run: bool = False) -> FetchRes
     return FetchResult(dataset=dataset, rows=len(frame), outputs=outputs)
 
 
+def fetch_noaa_ndfd_forecasts(settings: Settings, dry_run: bool = False) -> FetchResult:
+    dataset = "noaa_ndfd_forecasts"
+    if dry_run:
+        return dry_run_result(settings, dataset)
+    frame, metadata = noaa_ndfd.fetch_ndfd_forecasts(settings)
+    outputs = write_dataset(settings.data_dir, dataset, frame, metadata)
+    return FetchResult(dataset=dataset, rows=len(frame), outputs=outputs)
+
+
+def fetch_noaa_station_observations(settings: Settings, dry_run: bool = False) -> FetchResult:
+    dataset = "noaa_station_observations"
+    if dry_run:
+        return dry_run_result(settings, dataset)
+    frame, metadata = noaa_observations.fetch_station_observations(settings)
+    outputs = write_dataset(settings.data_dir, dataset, frame, metadata)
+    return FetchResult(dataset=dataset, rows=len(frame), outputs=outputs)
+
+
+def fetch_nws_forecast_accuracy(settings: Settings, dry_run: bool = False) -> FetchResult:
+    dataset = "nws_forecast_accuracy"
+    if dry_run:
+        return dry_run_result(settings, dataset)
+    frame, metadata = nws_accuracy.fetch_forecast_accuracy(settings)
+    outputs = write_dataset(settings.data_dir, dataset, frame, metadata)
+    outputs.update(metadata.get("report_outputs", {}))
+    return FetchResult(dataset=dataset, rows=len(frame), outputs=outputs)
+
+
 FETCHERS: dict[str, FetchFn] = {
     "bls-labor": fetch_bls_labor,
+    "bls-cex-consumption": fetch_bls_cex_consumption,
     "bea-pce": fetch_bea_pce,
+    "bea-gdp-components": fetch_bea_gdp_components,
     "bea-gdp-industry": fetch_bea_gdp_industry,
     "scf-home-assets": fetch_scf_home_assets,
+    "noaa-ndfd-forecasts": fetch_noaa_ndfd_forecasts,
+    "noaa-station-observations": fetch_noaa_station_observations,
+    "nws-forecast-accuracy": fetch_nws_forecast_accuracy,
 }
 
 

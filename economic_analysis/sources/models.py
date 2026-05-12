@@ -44,6 +44,24 @@ class NormalizedLaborRow(BaseModel):
     seasonality: Literal["seasonally_adjusted"]
 
 
+class NormalizedCexConsumptionRow(BaseModel):
+    year: int
+    period: str
+    frequency: Literal["annual"]
+    series_id: str
+    category: str
+    subcategory: str | None
+    item: str | None
+    demographic: Literal["income_quintile"]
+    group: str
+    measure: Literal["aggregate_expenditure"]
+    value: float | None
+    unit: Literal["millions_of_dollars"]
+    raw_aspect_value: float | None
+    raw_aspect_unit: Literal["percent_of_total_aggregate"]
+    footnote_code: str | None
+
+
 class BeaError(SourceModel):
     api_error_code: str | None = Field(default=None, validation_alias=AliasChoices("APIErrorCode", "api_error_code"))
     api_error_description: str | None = Field(
@@ -58,6 +76,18 @@ class BeaNote(SourceModel):
 
 
 class BeaPceDataRow(SourceModel):
+    time_period: str = Field(validation_alias=AliasChoices("TimePeriod", "time_period"))
+    data_value: str | None = Field(default=None, validation_alias=AliasChoices("DataValue", "data_value"))
+    line_number: str | None = Field(default=None, validation_alias=AliasChoices("LineNumber", "Line", "line_number"))
+    line_description: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("LineDescription", "Description", "SeriesDescription", "line_description"),
+    )
+    unit: str | None = Field(default=None, validation_alias=AliasChoices("UNIT_MULT", "Unit", "CL_UNIT", "unit"))
+    table_name: str | None = Field(default=None, validation_alias=AliasChoices("TableName", "table_name"))
+
+
+class BeaGdpComponentDataRow(SourceModel):
     time_period: str = Field(validation_alias=AliasChoices("TimePeriod", "time_period"))
     data_value: str | None = Field(default=None, validation_alias=AliasChoices("DataValue", "data_value"))
     line_number: str | None = Field(default=None, validation_alias=AliasChoices("LineNumber", "Line", "line_number"))
@@ -127,6 +157,18 @@ class NormalizedPceRow(BaseModel):
     frequency: Literal["monthly"]
     line_code: str | None
     category: str | None
+    value: float | None
+    unit: str | None
+    source_table: str
+
+
+class NormalizedGdpComponentRow(BaseModel):
+    period: str
+    year: int | None
+    quarter: int | None
+    frequency: Literal["annual", "quarterly"]
+    component: str | None
+    component_code: str
     value: float | None
     unit: str | None
     source_table: str

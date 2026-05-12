@@ -9,7 +9,9 @@ def test_fetch_all_dry_run_has_no_network_or_credentials(capsys, tmp_path):
     output = capsys.readouterr().out
     assert exit_code == 0
     assert "bls_labor" in output
+    assert "bls_cex_consumption" in output
     assert "bea_pce" in output
+    assert "bea_gdp_components" in output
     assert "scf_home_assets" in output
     assert "bea_gdp_industry" in output
     assert "would write" in output

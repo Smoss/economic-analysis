@@ -5,6 +5,7 @@ __pycache__/
 
 # Project-generated data and local agent metadata
 data/
+outputs/
 .serena/
 
 # C extensions

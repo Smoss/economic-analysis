@@ -10,6 +10,7 @@ from economic_analysis.io import utc_now_iso, write_json
 from economic_analysis.sources.models import BlsLaborResponse, NormalizedLaborRow
 
 BLS_API_URL = "https://api.bls.gov/publicAPI/v2/timeseries/data/"
+BLS_MAX_YEARS_PER_REQUEST = 10
 
 BLS_LABOR_SERIES: dict[str, dict[str, str]] = {
     "LNS11000000": {"measure": "labor_force", "survey": "CPS", "frequency": "monthly", "unit": "thousands of persons"},
@@ -42,6 +43,20 @@ BLS_LABOR_SERIES: dict[str, dict[str, str]] = {
 }
 
 
+def labor_year_windows(start_year: int = 1990, end_year: int | None = None) -> list[tuple[int, int]]:
+    end_year = end_year or pd.Timestamp.utcnow().year
+    if start_year > end_year:
+        raise ValueError("start_year must be less than or equal to end_year")
+
+    windows: list[tuple[int, int]] = []
+    window_start = start_year
+    while window_start <= end_year:
+        window_end = min(window_start + BLS_MAX_YEARS_PER_REQUEST - 1, end_year)
+        windows.append((window_start, window_end))
+        window_start = window_end + 1
+    return windows
+
+
 def build_labor_request(
     api_key: str | None = None, start_year: int = 1990, end_year: int | None = None
 ) -> dict[str, Any]:
@@ -59,25 +74,43 @@ def build_labor_request(
 
 
 def fetch_labor(settings: Settings) -> tuple[pd.DataFrame, dict[str, Any]]:
-    payload = build_labor_request(settings.bls_api_key)
-    response = requests.post(BLS_API_URL, json=payload, timeout=60)
-    response.raise_for_status()
-    raw = response.json()
+    raw_requests: list[dict[str, Any]] = []
+    frames: list[pd.DataFrame] = []
+    release_notes: list[str] = []
+
+    for start_year, end_year in labor_year_windows():
+        payload = build_labor_request(settings.bls_api_key, start_year=start_year, end_year=end_year)
+        response = requests.post(BLS_API_URL, json=payload, timeout=60)
+        response.raise_for_status()
+        raw = response.json()
+        parsed = BlsLaborResponse.model_validate(raw)
+
+        sanitized_payload = {key: value for key, value in payload.items() if key != "registrationkey"}
+        raw_requests.append(
+            {
+                "window": {"start_year": start_year, "end_year": end_year},
+                "api_params": sanitized_payload,
+                "response": raw,
+            }
+        )
+        frames.append(normalize_labor(raw))
+        release_notes.extend(parsed.message)
 
     raw_path = settings.data_dir / "raw" / "bls" / "labor.json"
-    write_json(raw_path, raw)
+    write_json(raw_path, {"requests": raw_requests})
 
-    parsed = BlsLaborResponse.model_validate(raw)
-    frame = normalize_labor(raw)
+    frame = pd.concat(frames, ignore_index=True) if frames else normalize_labor({})
+    if not frame.empty:
+        frame = frame.sort_values(["series_id", "date"]).reset_index(drop=True)
     metadata = {
         "source": "BLS Public Data API v2",
         "source_url": BLS_API_URL,
-        "api_params": {key: value for key, value in payload.items() if key != "registrationkey"},
+        "api_params": {"requests": [request["api_params"] for request in raw_requests]},
         "raw_path": str(raw_path),
         "fetched_at": utc_now_iso(),
         "frequency": "monthly",
         "units": sorted({info["unit"] for info in BLS_LABOR_SERIES.values()}),
-        "release_notes": parsed.message,
+        "release_notes": release_notes,
     }
     return frame, metadata
 
