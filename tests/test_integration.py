@@ -19,6 +19,15 @@ def test_live_bls_labor_fetch(tmp_path):
     assert metadata["source"] == "BLS Public Data API v2"
 
 
+def test_live_bls_sector_employment_fetch(tmp_path):
+    settings = load_settings(tmp_path)
+    frame, metadata = bls.fetch_sector_employment(settings)
+
+    assert not frame.empty
+    assert {"date", "series_id", "sector", "value"}.issubset(frame.columns)
+    assert metadata["source"] == "BLS Current Employment Statistics, Public Data API v2"
+
+
 def test_live_bls_cex_consumption_fetch(tmp_path):
     settings = load_settings(tmp_path)
     frame, metadata = cex.fetch_consumption(settings)

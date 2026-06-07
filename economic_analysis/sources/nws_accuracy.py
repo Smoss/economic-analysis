@@ -51,7 +51,10 @@ def fetch_forecast_accuracy(settings: Settings) -> tuple[pd.DataFrame, dict[str,
         "lead_days": list(LEAD_DAYS),
         "units": {"temperature_error": "degrees_fahrenheit", "precipitation_error": "inches"},
         "stations": station_metadata(),
-        "method": "Join station-date NDFD forecasts to daily observations and summarize errors by station, lead, year, month, and period bucket.",
+        "method": (
+            "Join station-date NDFD forecasts to daily observations and summarize errors by station, lead, "
+            "year, month, and period bucket."
+        ),
     }
     return detail, metadata
 
@@ -150,8 +153,10 @@ def _yearly_mae_svg(summary: pd.DataFrame) -> str:
         bars.append(
             f'<rect x="{x:.1f}" y="{y:.1f}" width="{bar_width - 8:.1f}" height="{bar_height:.1f}" fill="{color}" />'
         )
+        label_x = x + (bar_width - 8) / 2
         bars.append(
-            f'<text x="{x + (bar_width - 8) / 2:.1f}" y="{height - 24}" text-anchor="middle" font-size="11">{int(row["year"])}</text>'
+            f'<text x="{label_x:.1f}" y="{height - 24}" text-anchor="middle" font-size="11">'
+            f'{int(row["year"])}</text>'
         )
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" role="img" '

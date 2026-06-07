@@ -31,6 +31,7 @@ CEX_ALL_CONSUMERS_CHARACTERISTIC_CODE = "01"
 CEX_INCOME_QUINTILE_CHARACTERISTIC_CODES = {"02", "03", "04", "05", "06"}
 CEX_AGGREGATE_ASPECT_TYPE = "AG"
 CEX_TOTAL_ITEM_CODES = {"TOTALEXP", "TOTEXP", "TOTEXPCQ"}
+CEX_DETAILED_CONSUMER_BURDEN_ITEM_CODES = {"GASFUEL"}
 
 
 def fetch_consumption(settings: Settings) -> tuple[pd.DataFrame, dict[str, Any]]:
@@ -61,6 +62,7 @@ def fetch_consumption(settings: Settings) -> tuple[pd.DataFrame, dict[str, Any]]
         "units": ["millions_of_dollars"],
         "measure": "aggregate_expenditure",
         "demographic": "income_quintile",
+        "detailed_items": sorted(CEX_DETAILED_CONSUMER_BURDEN_ITEM_CODES),
     }
     return frame, metadata
 
@@ -221,7 +223,7 @@ def _relevant_series(series_rows: Iterable[dict[str, str]], major_item_codes: se
 
 
 def _major_item_codes(item_rows: Iterable[dict[str, str]]) -> set[str]:
-    codes = set(CEX_TOTAL_ITEM_CODES)
+    codes = set(CEX_TOTAL_ITEM_CODES) | CEX_DETAILED_CONSUMER_BURDEN_ITEM_CODES
     for row in item_rows:
         if row.get("display_level") == "0" and row.get("selectable", "T") == "T":
             codes.add(row["item_code"])

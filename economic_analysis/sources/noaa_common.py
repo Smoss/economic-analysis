@@ -34,7 +34,14 @@ NORTHEAST_AIRPORT_STATIONS: tuple[WeatherStation, ...] = (
     WeatherStation("BUF", "GHCND:USW00014733", "Buffalo Niagara International Airport", 42.9405, -78.7322, "NY"),
     WeatherStation("BTV", "GHCND:USW00014742", "Burlington International Airport", 44.4719, -73.1533, "VT"),
     WeatherStation("PWM", "GHCND:USW00014764", "Portland International Jetport", 43.6462, -70.3093, "ME"),
-    WeatherStation("PVD", "GHCND:USW00014765", "Rhode Island T. F. Green International Airport", 41.7225, -71.4325, "RI"),
+    WeatherStation(
+        "PVD",
+        "GHCND:USW00014765",
+        "Rhode Island T. F. Green International Airport",
+        41.7225,
+        -71.4325,
+        "RI",
+    ),
     WeatherStation("ALB", "GHCND:USW00014735", "Albany International Airport", 42.7481, -73.8037, "NY"),
     WeatherStation("SYR", "GHCND:USW00014771", "Syracuse Hancock International Airport", 43.1112, -76.1063, "NY"),
 )
@@ -71,4 +78,3 @@ def period_bucket(value: date | str) -> Literal["baseline_2016_2023", "recent_20
     if parsed >= RECENT_START:
         return "recent_2024_2025"
     return "baseline_2016_2023"
-

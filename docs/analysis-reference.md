@@ -36,11 +36,17 @@ General:
 Core processed datasets used:
 
 - `data/processed/bls_labor/bls_labor.csv`: monthly BLS labor series. October 2025 is missing for the core CPS measures in the local data.
+- `data/processed/bls_oews_swe_employment/bls_oews_swe_employment.csv`: annual BLS OEWS all-occupations employment and harmonized software-developer employment.
 - `data/processed/bea_pce/bea_pce.csv`: monthly BEA PCE series.
 - `data/processed/bea_gdp_components/bea_gdp_components.csv`: annual and quarterly BEA expenditure-side GDP components.
 - `data/processed/bea_gdp_industry/bea_gdp_industry.csv`: quarterly BEA GDP-by-industry value added.
 - `data/processed/bls_cex_consumption/bls_cex_consumption.csv`: normalized CEX aggregate spending by income quintile.
 - `data/processed/scf_home_assets/scf_home_assets.csv`: SCF home and residential real-estate assets by household groups.
+- `data/processed/acs_major_employment/acs_major_employment.csv`: national ACS PUMS employment-to-population rates by bachelor's field of degree for recent graduates ages 22-27, 2015-2024. The 2020 observation uses Census experimental ACS 1-year PUMS.
+- `data/processed/fred_swe_labor_market/fred_swe_labor_market.csv`: FRED software-developer employment, broader computer/math employment proxy, and Indeed job-postings indexes.
+- `data/processed/fred_indeed_job_postings/fred_indeed_job_postings.csv`: FRED/Indeed current job-postings indexes for all active U.S. sector/occupation series and selected states (MA, NJ, NY, CA, WA, TX, FL).
+- `data/processed/fred_consumer_sentiment/fred_consumer_sentiment.csv`: monthly University of Michigan consumer sentiment index from FRED.
+- `data/processed/fred_oil_energy_prices/fred_oil_energy_prices.csv`: FRED WTI crude oil and U.S. regular gasoline prices for oil-price scenario modeling.
 
 Generated artifacts:
 
@@ -56,6 +62,8 @@ Generated artifacts:
 - `outputs/cex_saving_rate_proxy_quintile_2016_2023.svg`
 - `outputs/cex_debt_quintile_2016_2024.csv`
 - `outputs/cex_debt_quintile_2016_2024.svg`
+- `outputs/consumer_sentiment_macro_comparison_2020_2025.csv`
+- `outputs/oil_consumer_burden_scenarios.csv`
 
 ## Formula Notes
 
@@ -64,6 +72,9 @@ Generated artifacts:
 - CEX consumption index: each income quintile's aggregate annual expenditure is divided by its 2016 value and multiplied by 100.
 - CEX saving-rate proxy: `(aggregate income after taxes - aggregate expenditures) / aggregate income after taxes`.
 - CEX non-mortgage debt proxy: `credit-card debt + student-loan debt + other-loan debt` per consumer unit.
+- ACS major employment rate: weighted employed recent graduates divided by weighted recent graduates in the same bachelor's field of degree. Recent graduates are ages 22-27 with a bachelor's degree or higher; employed ACS ESR codes are 1, 2, 4, and 5.
+- Oil consumer-burden scenarios: annual WTI and gasoline prices estimate a linear oil-to-gasoline pass-through; latest common CEX/FRED year gasoline-and-other-fuels spending is scaled by scenario gasoline price while holding quantity fixed; burden is fuel spending divided by total annual expenditures.
+- Oil supply-shock scenarios: net unresolved crude supply gaps are divided by baseline crude supply, then divided by the absolute value of short-run crude demand elasticity to estimate the WTI price-change share.
 
 ## Interpretation Notes
 
@@ -77,10 +88,17 @@ Generated artifacts:
 ## Caveats
 
 - Many comparisons are nominal. Use real series before making purchasing-power or productivity claims.
+- Oil consumer-burden scenarios are partial-equilibrium estimates; they do not model demand response, income feedback, GDP multipliers, or second-round inflation effects.
+- Oil supply-shock scenarios treat the supply gap, baseline supply, and demand elasticity as assumptions, not fetched market-balance data.
 - The CEX saving-rate proxy is not the official BEA/BLS distributional personal saving rate.
 - CEX debt excludes mortgages, vehicle principal, and home-equity debt.
 - CEX debt-to-after-tax-income stops at 2023 because the local CEX income-after-tax quintile series was not available for 2024.
 - Imports are charted as positive import spending in the GDP component index, even though imports subtract from GDP.
+- ACS major employment is a national employment-to-population measure, not a university placement rate or a NACE first-destination survey result.
+- The Census Bureau did not release a standard 2020 ACS 1-year PUMS, so the decade-long ACS major-employment pipeline uses the experimental 2020 release for continuity.
+- The exact FRED software-developer employment series stops at 2019; the current employment count in the FRED SWE labor-market dataset is a broader computer/math occupation proxy.
+- FRED/Indeed job-postings data are copyrighted and require pre-approval for redistribution; use the normalized dataset for internal analysis with the same limitation.
+- The BLS OEWS SWE employment series bridges a SOC code change: older years sum applications and systems software developers, while current years use the published Software Developers row when available.
 
 ## Recommended Next Steps
 

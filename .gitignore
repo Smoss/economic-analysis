@@ -4,7 +4,7 @@ __pycache__/
 *$py.class
 
 # Project-generated data and local agent metadata
-data/
+# data/
 outputs/
 .serena/
 
