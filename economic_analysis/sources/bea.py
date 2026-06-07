@@ -8,15 +8,19 @@ import requests
 from economic_analysis.config import Settings
 from economic_analysis.io import utc_now_iso, write_json
 from economic_analysis.sources.models import (
+    BeaGdpComponentDataRow,
     BeaGdpIndustryDataRow,
     BeaPceDataRow,
     BeaResponse,
+    NormalizedGdpComponentRow,
     NormalizedGdpIndustryRow,
     NormalizedPceRow,
 )
 
 BEA_API_URL = "https://apps.bea.gov/api/data/"
 PCE_TABLE = "T20805"
+GDP_COMPONENTS_TABLE = "T10105"
+GDP_COMPONENT_LINE_CODES = {"2", "7", "16", "19", "22"}
 GDP_INDUSTRY_TABLES = {
     "1": "value_added_current_dollars",
     "5": "value_added_percent_of_gdp",
@@ -42,6 +46,18 @@ def build_bea_pce_params(api_key: str, year: str = "X") -> dict[str, str]:
     }
 
 
+def build_bea_gdp_components_params(api_key: str, year: str = "X") -> dict[str, str]:
+    return {
+        "UserID": api_key,
+        "method": "GetData",
+        "datasetname": "NIPA",
+        "TableName": GDP_COMPONENTS_TABLE,
+        "Frequency": "A,Q",
+        "Year": year,
+        "ResultFormat": "JSON",
+    }
+
+
 def build_bea_gdp_industry_params(api_key: str, table_id: str, year: str = "ALL") -> dict[str, str]:
     return {
         "UserID": api_key,
@@ -62,6 +78,16 @@ def fetch_pce(settings: Settings) -> tuple[pd.DataFrame, dict[str, Any]]:
     write_json(raw_path, raw)
     frame = normalize_pce(raw)
     metadata = _bea_metadata("BEA NIPA Personal Consumption Expenditures", params, raw_path, frame)
+    return frame, metadata
+
+
+def fetch_gdp_components(settings: Settings) -> tuple[pd.DataFrame, dict[str, Any]]:
+    params = build_bea_gdp_components_params(require_bea_key(settings))
+    raw = _get_bea(params)
+    raw_path = settings.data_dir / "raw" / "bea" / "gdp_components.json"
+    write_json(raw_path, raw)
+    frame = normalize_gdp_components(raw)
+    metadata = _bea_metadata("BEA NIPA GDP Expenditure Components", params, raw_path, frame)
     return frame, metadata
 
 
@@ -124,6 +150,44 @@ def normalize_pce(raw: dict[str, Any]) -> pd.DataFrame:
     columns = ["date", "frequency", "line_code", "category", "value", "unit", "source_table"]
     frame = pd.DataFrame([row.model_dump() for row in normalized], columns=columns)
     return frame.sort_values(["line_code", "date"]).reset_index(drop=True) if not frame.empty else frame
+
+
+def normalize_gdp_components(raw: dict[str, Any]) -> pd.DataFrame:
+    rows = [BeaGdpComponentDataRow.model_validate(row) for row in _bea_data_rows(raw)]
+    normalized: list[NormalizedGdpComponentRow] = []
+    for row in rows:
+        if row.line_number not in GDP_COMPONENT_LINE_CODES:
+            continue
+        year = _period_year(row.time_period)
+        quarter = _period_quarter(row.time_period)
+        normalized.append(
+            NormalizedGdpComponentRow(
+                period=row.time_period,
+                year=year,
+                quarter=quarter,
+                frequency=_bea_frequency(None, row.time_period),
+                component=row.line_description,
+                component_code=row.line_number,
+                value=_numeric(row.data_value),
+                unit=row.unit,
+                source_table=row.table_name or GDP_COMPONENTS_TABLE,
+            )
+        )
+    columns = [
+        "period",
+        "year",
+        "quarter",
+        "frequency",
+        "component",
+        "component_code",
+        "value",
+        "unit",
+        "source_table",
+    ]
+    frame = pd.DataFrame([row.model_dump() for row in normalized], columns=columns)
+    return (
+        frame.sort_values(["component_code", "period"]).reset_index(drop=True) if not frame.empty else frame
+    )
 
 
 def normalize_gdp_industry(raw: dict[str, Any], table_id: str, metric: str) -> pd.DataFrame:

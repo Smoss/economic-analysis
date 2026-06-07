@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Oil Consumer Burden Model Assumptions</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #1f2933;
+        --muted: #5f6b7a;
+        --line: #d7dee8;
+        --panel: #f7f9fb;
+        --accent: #0f766e;
+      }
+
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        line-height: 1.55;
+        color: var(--ink);
+        background: #ffffff;
+      }
+
+      main {
+        max-width: 920px;
+        margin: 0 auto;
+        padding: 48px 28px 72px;
+      }
+
+      h1,
+      h2 {
+        line-height: 1.15;
+        margin: 0;
+      }
+
+      h1 {
+        font-size: clamp(2rem, 4vw, 3rem);
+        letter-spacing: 0;
+      }
+
+      h2 {
+        margin-top: 38px;
+        padding-top: 26px;
+        border-top: 1px solid var(--line);
+        font-size: 1.35rem;
+      }
+
+      p {
+        margin: 14px 0 0;
+      }
+
+      .lede {
+        max-width: 760px;
+        color: var(--muted);
+        font-size: 1.08rem;
+      }
+
+      .meta {
+        margin-top: 18px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .pill {
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 4px 10px;
+        background: var(--panel);
+      }
+
+      ol {
+        margin: 18px 0 0;
+        padding-left: 1.4rem;
+      }
+
+      li {
+        margin: 14px 0;
+      }
+
+      strong {
+        color: #111827;
+      }
+
+      code {
+        font-family: "SFMono-Regular", Consolas, monospace;
+        font-size: 0.94em;
+        background: #eef3f7;
+        border: 1px solid #d9e2ec;
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+
+      .callout {
+        margin-top: 24px;
+        padding: 18px 20px;
+        border-left: 4px solid var(--accent);
+        background: #eefaf7;
+      }
+
+      table {
+        width: 100%;
+        margin-top: 18px;
+        border-collapse: collapse;
+        font-size: 0.95rem;
+      }
+
+      th,
+      td {
+        padding: 10px 12px;
+        border: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: var(--panel);
+      }
+
+      footer {
+        margin-top: 42px;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Oil Consumer Burden Model Assumptions</h1>
+        <p class="lede">
+          This note documents the assumptions behind the first increment of the oil-price scenario model. The model
+          estimates how alternative crude oil prices change consumer fuel-spending burden by CEX income quintile.
+        </p>
+        <div class="meta">
+          <span class="pill">Model output: <code>outputs/oil_consumer_burden_scenarios.csv</code></span>
+          <span class="pill">Primary metric: fuel spending share of total expenditure</span>
+          <span class="pill">Scenario unit: dollars per barrel of WTI crude oil</span>
+        </div>
+      </header>
+
+      <section>
+        <h2>Core Assumptions</h2>
+        <ol>
+          <li>
+            <strong>Oil-price scenarios are WTI crude oil prices.</strong>
+            Scenario inputs are interpreted as dollars per barrel of West Texas Intermediate crude oil, not Brent,
+            imported refiners' acquisition cost, diesel, jet fuel, or a broad energy index.
+          </li>
+          <li>
+            <strong>Gasoline is the consumer transmission channel.</strong>
+            The first model focuses on household fuel burden through retail regular gasoline prices. It does not
+            separately model heating oil, natural gas, electricity, public transit fares, airfares, or freight pass-through.
+          </li>
+          <li>
+            <strong>Oil-to-gasoline pass-through is linear.</strong>
+            Annual average WTI prices and annual average retail regular gasoline prices are fit with a simple linear
+            relationship. The same slope and intercept are used for all scenarios.
+          </li>
+          <li>
+            <strong>The pass-through relationship is estimated from historical annual averages.</strong>
+            The model aggregates FRED oil and gasoline observations to calendar-year averages before fitting pass-through.
+            This intentionally smooths weekly and monthly volatility.
+          </li>
+          <li>
+            <strong>Consumer gasoline quantity is held constant.</strong>
+            Baseline gasoline-and-other-fuels spending is scaled by the ratio of scenario gasoline price to baseline
+            gasoline price. Consumers do not drive less, substitute vehicles, switch fuels, or change location in response
+            to higher prices.
+          </li>
+          <li>
+            <strong>CEX gasoline-and-other-fuels spending is the exposure base.</strong>
+            Fuel burden uses the CEX item <code>Gasoline and other fuels</code> for each income quintile. The item is a
+            consumer expenditure measure, not a physical gallons-consumed measure.
+          </li>
+          <li>
+            <strong>Total annual expenditures are the burden denominator.</strong>
+            Burden is calculated as scenario fuel spending divided by total annual CEX expenditures for the same income
+            quintile. The denominator is not after-tax income, disposable income, wealth, or official poverty resources.
+          </li>
+          <li>
+            <strong>The baseline is the latest common year available across required datasets.</strong>
+            The model chooses the most recent year with CEX fuel spending, CEX total expenditures, and FRED annual gasoline
+            prices. Current local CEX data are expected to make this 2024 once the oil/gasoline fetch succeeds.
+          </li>
+          <li>
+            <strong>Income quintiles are treated as stable groups.</strong>
+            The model compares burden by reported CEX income quintile and does not model households moving between quintiles
+            as prices, wages, or employment conditions change.
+          </li>
+          <li>
+            <strong>All values are nominal.</strong>
+            The output is a nominal-dollar scenario exercise. It does not deflate spending, rebase to real dollars, or
+            estimate purchasing-power loss after general inflation.
+          </li>
+          <li>
+            <strong>There are no macro feedback effects.</strong>
+            The model does not estimate effects on GDP, employment, wages, interest rates, inflation expectations,
+            government transfers, or broader PCE categories.
+          </li>
+          <li>
+            <strong>Scenarios are comparative statics.</strong>
+            Each oil price is evaluated as a standalone steady scenario against the same baseline. The model does not
+            simulate a path over time, adjustment lags, inventories, refinery outages, taxes, or regional price dispersion.
+          </li>
+        </ol>
+      </section>
+
+      <section>
+        <h2>Model Mechanics</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Step</th>
+              <th>Assumption embedded in the step</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Fetch price inputs</td>
+              <td>FRED WTI crude and U.S. regular gasoline series are adequate national price anchors.</td>
+            </tr>
+            <tr>
+              <td>Average by year</td>
+              <td>Annual averages are the right time scale for matching annual CEX spending.</td>
+            </tr>
+            <tr>
+              <td>Fit pass-through</td>
+              <td>A single historical linear relationship can translate scenario oil prices into gasoline prices.</td>
+            </tr>
+            <tr>
+              <td>Select baseline</td>
+              <td>The latest common year is the best current snapshot for household exposure.</td>
+            </tr>
+            <tr>
+              <td>Scale fuel spending</td>
+              <td>Fuel quantities are unchanged, so spending moves proportionally with gasoline prices.</td>
+            </tr>
+            <tr>
+              <td>Compute burden</td>
+              <td>Total CEX expenditure is the appropriate first-pass measure of the household budget base.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>Supply Shock Mode</h2>
+        <p>
+          The model can estimate crude oil prices from net unresolved supply gaps before running the existing consumer
+          burden calculation. This mode treats the shock as the remaining crude supply shortfall after spare capacity,
+          inventory draws, and policy responses have already been considered.
+        </p>
+        <ol>
+          <li>
+            <strong>Supply shocks are net gaps.</strong>
+            A shock of <code>5</code> means the market is short 5 million barrels per day after offsets, not that gross
+            production fell by 5 million barrels per day before any response.
+          </li>
+          <li>
+            <strong>The default shock set is a stress set.</strong>
+            If supply-shock mode is used without explicit shock values, the model evaluates <code>1, 3, 5, 8, 10</code>
+            million barrels per day.
+          </li>
+          <li>
+            <strong>Baseline supply defaults to 100 million barrels per day.</strong>
+            This is a documented round assumption, not a fetched live estimate. It can be changed with
+            <code>--baseline-supply-mbd</code>.
+          </li>
+          <li>
+            <strong>Crude demand elasticity defaults to -0.10.</strong>
+            This short-run elasticity can be tuned with <code>--crude-demand-elasticity</code>. More negative values
+            produce smaller price moves for the same supply gap; values closer to zero produce larger price moves.
+          </li>
+          <li>
+            <strong>Baseline oil price comes from processed FRED data unless overridden.</strong>
+            The model uses the latest annual WTI value available in the processed oil/gasoline price data, unless
+            <code>--baseline-oil-price</code> is supplied.
+          </li>
+        </ol>
+        <table>
+          <thead>
+            <tr>
+              <th>Formula</th>
+              <th>Meaning</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>supply_gap_share = shock_mbd / baseline_supply_mbd</code></td>
+              <td>Converts the unresolved supply gap into a percent of baseline crude supply.</td>
+            </tr>
+            <tr>
+              <td><code>price_change_share = supply_gap_share / abs(elasticity)</code></td>
+              <td>Uses short-run demand elasticity to estimate the crude price response.</td>
+            </tr>
+            <tr>
+              <td><code>scenario_oil_price = baseline_oil_price * (1 + price_change_share)</code></td>
+              <td>Creates the WTI scenario that feeds into gasoline pass-through and consumer burden.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>Known Limits</h2>
+        <ol>
+          <li>The model is useful for burden sensitivity, not for forecasting retail gasoline prices.</li>
+          <li>It likely overstates burden at very high oil prices because real consumers reduce usage over time.</li>
+          <li>It may understate broader cost pressure because it excludes indirect fuel costs embedded in other goods and services.</li>
+          <li>It does not distinguish rural, suburban, and urban households, which likely have different gasoline exposure.</li>
+          <li>It does not account for state gasoline taxes, refinery margins, seasonal blends, or regional supply constraints.</li>
+          <li>It uses aggregate income-quintile spending, so it does not show within-quintile variation.</li>
+        </ol>
+      </section>
+
+      <section>
+        <h2>Assumptions To Revisit Later</h2>
+        <div class="callout">
+          The first assumptions to relax should be the constant-quantity assumption and the single national gasoline-price
+          assumption. Those are the two places where the model is most likely to be directionally right but mechanically
+          too simple.
+        </div>
+        <ol>
+          <li>Add a gasoline demand elasticity so high-price scenarios reduce implied consumption.</li>
+          <li>Add regional CEX or state gasoline-price detail if the analysis needs geographic exposure.</li>
+          <li>Compare burden against after-tax income as a second metric, not a replacement for expenditure share.</li>
+          <li>Add indirect energy exposure through food, transportation services, and goods delivery.</li>
+          <li>Estimate separate pass-through relationships for rising versus falling oil-price regimes.</li>
+        </ol>
+      </section>
+
+      <footer>
+        This document describes the v1 implementation in <code>economic_analysis/oil_model.py</code>. It should be updated
+        whenever the scenario model changes its data inputs, baseline selection, burden denominator, or pass-through method.
+      </footer>
+    </main>
+  </body>
+</html>
